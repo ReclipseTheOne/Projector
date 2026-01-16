@@ -26,9 +26,6 @@ repositories {
         name = "Jared's maven"
         url = "https://maven.blamejared.com/"
     }
-
-    // Porting Dead Libs
-    maven { url 'https://jitpack.io' }
 }
 
 base {
@@ -95,12 +92,7 @@ dependencies {
     compileOnly "mezz.jei:jei-${minecraft_version}-common-api:${jei_version}"
     compileOnly "mezz.jei:jei-${minecraft_version}-neoforge-api:${jei_version}"
     localRuntime "mezz.jei:jei-${minecraft_version}-neoforge:${jei_version}"
-
-    implementation "com.github.Porting-Dead-Mods:Porting-Dead-Libs:${pdl_version}"
 }
-
-def parts = pdl_version.tokenize('.')
-def pdl_nextMinor = "${parts[0]}.${(parts[1].toInteger() + 1)}.0"
 
 var generateModMetadata = tasks.register("generateModMetadata", ProcessResources) {
     var replaceProperties = [
@@ -113,9 +105,7 @@ var generateModMetadata = tasks.register("generateModMetadata", ProcessResources
             mod_license            : mod_license,
             mod_version            : mod_version,
             mod_authors            : mod_authors,
-            mod_description        : mod_description,
-            pdl_version            : pdl_version,
-            pdl_nextMinor          : pdl_nextMinor
+            mod_description        : mod_description
     ]
     inputs.properties replaceProperties
     expand replaceProperties

@@ -1,9 +1,0 @@
-{
-  "example": {
-    "category": "players",
-    "subtitle": "examplemod.example",
-    "sounds": [
-      "examplemod:example"
-    ]
-  }
-}
