@@ -26,19 +26,24 @@ public class ProjectorScreen extends AbstractContainerScreen<ProjectorMenu> {
     private FloatSlider offsetXSlider;
     private FloatSlider offsetYSlider;
     private FloatSlider offsetZSlider;
-    private FloatSlider rotationSlider;
+    private FloatSlider rotationXSlider;
+    private FloatSlider rotationYSlider;
+    private FloatSlider rotationZSlider;
 
     private EditBox offsetXInput;
     private EditBox offsetYInput;
     private EditBox offsetZInput;
-    private EditBox rotationInput;
+    private EditBox rotationXInput;
+    private EditBox rotationYInput;
+    private EditBox rotationZInput;
 
     private boolean updatingFromSlider = false;
 
     private boolean hslMode = false;
     private Button modeToggleButton;
     private Button dropShadowButton;
-    private Checkbox followPlayerCheckbox;
+    private Checkbox followPlayerXCheckbox;
+    private Checkbox followPlayerYCheckbox;
 
     // Cached values for HSL mode
     private float cachedHue = 0;
@@ -46,7 +51,7 @@ public class ProjectorScreen extends AbstractContainerScreen<ProjectorMenu> {
     private float cachedLight = 100;
 
     private final int SCREEN_WIDTH = 250;
-    private final int SCREEN_HEIGHT = 230;
+    private final int SCREEN_HEIGHT = 290;
 
     private final int LEFT_PADDING = 10;
     private final int RIGHT_PADDING = 10;
@@ -152,15 +157,49 @@ public class ProjectorScreen extends AbstractContainerScreen<ProjectorMenu> {
         addRenderableWidget(offsetZInput);
         y += rowHeight + 2;
 
-        rotationSlider = new FloatSlider(x, y, sliderWidth, 20, "Y-Rotation",
-                ProjectorConfig.sliderRotationMin, ProjectorConfig.sliderRotationMax,
-                be.getRotation(), this::onRotationSliderChanged);
-        addRenderableWidget(rotationSlider);
-        rotationInput = new EditBox(font, x + sliderWidth + sliderInputGap, y + 1, sliderInputWidth, 18, Component.literal(""));
-        rotationInput.setMaxLength(8);
-        rotationInput.setValue(String.valueOf(be.getRotation()));
-        rotationInput.setResponder(this::onRotationInputChanged);
-        addRenderableWidget(rotationInput);
+        rotationXSlider = new FloatSlider(x, y, sliderWidth, 20, "X-Rotation",
+                ProjectorConfig.sliderRotationXMin, ProjectorConfig.sliderRotationXMax,
+                be.getRotationX(), this::onRotationXSliderChanged);
+        addRenderableWidget(rotationXSlider);
+        rotationXInput = new EditBox(font, x + sliderWidth + sliderInputGap, y + 1, sliderInputWidth, 18, Component.literal(""));
+        rotationXInput.setMaxLength(8);
+        rotationXInput.setValue(String.valueOf(be.getRotationX()));
+        rotationXInput.setResponder(this::onRotationXInputChanged);
+        addRenderableWidget(rotationXInput);
+        followPlayerXCheckbox = Checkbox.builder(Component.literal(""), font)
+                .pos(x + sliderWidth + sliderInputGap + sliderInputWidth + 5, y)
+                .selected(be.isFollowPlayerX())
+                .onValueChange((checkbox, value) -> sendUpdate())
+                .build();
+        addRenderableWidget(followPlayerXCheckbox);
+        y += rowHeight + 2;
+
+        rotationYSlider = new FloatSlider(x, y, sliderWidth, 20, "Y-Rotation",
+                ProjectorConfig.sliderRotationYMin, ProjectorConfig.sliderRotationYMax,
+                be.getRotationY(), this::onRotationYSliderChanged);
+        addRenderableWidget(rotationYSlider);
+        rotationYInput = new EditBox(font, x + sliderWidth + sliderInputGap, y + 1, sliderInputWidth, 18, Component.literal(""));
+        rotationYInput.setMaxLength(8);
+        rotationYInput.setValue(String.valueOf(be.getRotationY()));
+        rotationYInput.setResponder(this::onRotationYInputChanged);
+        addRenderableWidget(rotationYInput);
+        followPlayerYCheckbox = Checkbox.builder(Component.literal(""), font)
+                .pos(x + sliderWidth + sliderInputGap + sliderInputWidth + 5, y)
+                .selected(be.isFollowPlayerY())
+                .onValueChange((checkbox, value) -> sendUpdate())
+                .build();
+        addRenderableWidget(followPlayerYCheckbox);
+        y += rowHeight + 2;
+
+        rotationZSlider = new FloatSlider(x, y, sliderWidth, 20, "Z-Rotation",
+                ProjectorConfig.sliderRotationZMin, ProjectorConfig.sliderRotationZMax,
+                be.getRotationZ(), this::onRotationZSliderChanged);
+        addRenderableWidget(rotationZSlider);
+        rotationZInput = new EditBox(font, x + sliderWidth + sliderInputGap, y + 1, sliderInputWidth, 18, Component.literal(""));
+        rotationZInput.setMaxLength(8);
+        rotationZInput.setValue(String.valueOf(be.getRotationZ()));
+        rotationZInput.setResponder(this::onRotationZInputChanged);
+        addRenderableWidget(rotationZInput);
         y += rowHeight + 5;
 
         // Drop shadow toggle
@@ -170,14 +209,6 @@ public class ProjectorScreen extends AbstractContainerScreen<ProjectorMenu> {
                 .bounds(x, y, 80, 20)
                 .build();
         addRenderableWidget(dropShadowButton);
-
-        // Follow player checkbox
-        followPlayerCheckbox = Checkbox.builder(Component.literal("Follow Player"), font)
-                .pos(x + 90, y)
-                .selected(be.isFollowPlayer())
-                .onValueChange((checkbox, value) -> sendUpdate())
-                .build();
-        addRenderableWidget(followPlayerCheckbox);
 
         // Initialize color inputs
         updateColorInputs();
@@ -280,18 +311,50 @@ public class ProjectorScreen extends AbstractContainerScreen<ProjectorMenu> {
         sendUpdate();
     }
 
-    private void onRotationSliderChanged(float value) {
+    private void onRotationXSliderChanged(float value) {
         updatingFromSlider = true;
-        rotationInput.setValue(String.valueOf(value));
+        rotationXInput.setValue(String.valueOf(value));
         updatingFromSlider = false;
         sendUpdate();
     }
 
-    private void onRotationInputChanged(String value) {
+    private void onRotationXInputChanged(String value) {
         if (updatingFromSlider) return;
-        float floatVal = parseFloat(value, -Float.MAX_VALUE, Float.MAX_VALUE, rotationSlider.getValue());
-        if (floatVal >= ProjectorConfig.sliderRotationMin && floatVal <= ProjectorConfig.sliderRotationMax) {
-            rotationSlider.setValue(floatVal);
+        float floatVal = parseFloat(value, -Float.MAX_VALUE, Float.MAX_VALUE, rotationXSlider.getValue());
+        if (floatVal >= ProjectorConfig.sliderRotationXMin && floatVal <= ProjectorConfig.sliderRotationXMax) {
+            rotationXSlider.setValue(floatVal);
+        }
+        sendUpdate();
+    }
+
+    private void onRotationYSliderChanged(float value) {
+        updatingFromSlider = true;
+        rotationYInput.setValue(String.valueOf(value));
+        updatingFromSlider = false;
+        sendUpdate();
+    }
+
+    private void onRotationYInputChanged(String value) {
+        if (updatingFromSlider) return;
+        float floatVal = parseFloat(value, -Float.MAX_VALUE, Float.MAX_VALUE, rotationYSlider.getValue());
+        if (floatVal >= ProjectorConfig.sliderRotationYMin && floatVal <= ProjectorConfig.sliderRotationYMax) {
+            rotationYSlider.setValue(floatVal);
+        }
+        sendUpdate();
+    }
+
+    private void onRotationZSliderChanged(float value) {
+        updatingFromSlider = true;
+        rotationZInput.setValue(String.valueOf(value));
+        updatingFromSlider = false;
+        sendUpdate();
+    }
+
+    private void onRotationZInputChanged(String value) {
+        if (updatingFromSlider) return;
+        float floatVal = parseFloat(value, -Float.MAX_VALUE, Float.MAX_VALUE, rotationZSlider.getValue());
+        if (floatVal >= ProjectorConfig.sliderRotationZMin && floatVal <= ProjectorConfig.sliderRotationZMax) {
+            rotationZSlider.setValue(floatVal);
         }
         sendUpdate();
     }
@@ -320,7 +383,9 @@ public class ProjectorScreen extends AbstractContainerScreen<ProjectorMenu> {
         float offsetX = parseFloat(offsetXInput.getValue(), -Float.MAX_VALUE, Float.MAX_VALUE, offsetXSlider.getValue());
         float offsetY = parseFloat(offsetYInput.getValue(), -Float.MAX_VALUE, Float.MAX_VALUE, offsetYSlider.getValue());
         float offsetZ = parseFloat(offsetZInput.getValue(), -Float.MAX_VALUE, Float.MAX_VALUE, offsetZSlider.getValue());
-        float rotation = parseFloat(rotationInput.getValue(), -Float.MAX_VALUE, Float.MAX_VALUE, rotationSlider.getValue());
+        float rotationX = parseFloat(rotationXInput.getValue(), -Float.MAX_VALUE, Float.MAX_VALUE, rotationXSlider.getValue());
+        float rotationY = parseFloat(rotationYInput.getValue(), -Float.MAX_VALUE, Float.MAX_VALUE, rotationYSlider.getValue());
+        float rotationZ = parseFloat(rotationZInput.getValue(), -Float.MAX_VALUE, Float.MAX_VALUE, rotationZSlider.getValue());
 
         PacketDistributor.sendToServer(new ProjectorUpdatePayload(
                 menu.getBlockPos(),
@@ -328,14 +393,21 @@ public class ProjectorScreen extends AbstractContainerScreen<ProjectorMenu> {
                 new ProjectorUpdatePayload.Metadata(
                     color,
                     fontSize,
-					new ProjectorUpdatePayload.Metadata.Offset(
-	                    offsetX,
-	                    offsetY,
-	                    offsetZ
-					),
-                    rotation,
+                    new ProjectorUpdatePayload.Metadata.Offset(
+                        offsetX,
+                        offsetY,
+                        offsetZ
+                    ),
+                    new ProjectorUpdatePayload.Metadata.Rotation(
+                        rotationX,
+                        rotationY,
+                        rotationZ
+                    ),
                     dropShadow,
-                    followPlayerCheckbox.selected()
+                    new ProjectorUpdatePayload.Metadata.FollowPlayer(
+                        followPlayerXCheckbox.selected(),
+                        followPlayerYCheckbox.selected()
+                    )
                 )
         ));
     }
@@ -422,7 +494,7 @@ public class ProjectorScreen extends AbstractContainerScreen<ProjectorMenu> {
         if (textInput.isFocused() || redInput.isFocused() || greenInput.isFocused() ||
                 blueInput.isFocused() || fontSizeInput.isFocused() ||
                 offsetXInput.isFocused() || offsetYInput.isFocused() || offsetZInput.isFocused() ||
-                rotationInput.isFocused()) {
+                rotationXInput.isFocused() || rotationYInput.isFocused() || rotationZInput.isFocused()) {
             if (keyCode == 256) { // Escape
                 return super.keyPressed(keyCode, scanCode, modifiers);
             }
@@ -434,7 +506,9 @@ public class ProjectorScreen extends AbstractContainerScreen<ProjectorMenu> {
                     offsetXInput.keyPressed(keyCode, scanCode, modifiers) ||
                     offsetYInput.keyPressed(keyCode, scanCode, modifiers) ||
                     offsetZInput.keyPressed(keyCode, scanCode, modifiers) ||
-                    rotationInput.keyPressed(keyCode, scanCode, modifiers);
+                    rotationXInput.keyPressed(keyCode, scanCode, modifiers) ||
+                    rotationYInput.keyPressed(keyCode, scanCode, modifiers) ||
+                    rotationZInput.keyPressed(keyCode, scanCode, modifiers);
         }
         return super.keyPressed(keyCode, scanCode, modifiers);
     }

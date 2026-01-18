@@ -17,23 +17,40 @@ public record ProjectorUpdatePayload(
         Metadata metadata
 ) implements CustomPacketPayload {
     // Wrapper cuh there are no big enough composite()'s :(
-    public record Metadata(int color, int fontSize, Offset offset, float rotation, boolean dropShadow, boolean followPlayer) {
-		public record Offset(float x, float y, float z) {
-			public static final StreamCodec<RegistryFriendlyByteBuf, Offset> STREAM_CODEC = StreamCodec.composite(
-					ByteBufCodecs.FLOAT, Offset::x,
-					ByteBufCodecs.FLOAT, Offset::y,
-					ByteBufCodecs.FLOAT, Offset::z,
-					Offset::new
-			);
-		}
+    public record Metadata(int color, int fontSize, Offset offset, Rotation rotation, boolean dropShadow, FollowPlayer followPlayer) {
+        public record Offset(float x, float y, float z) {
+            public static final StreamCodec<RegistryFriendlyByteBuf, Offset> STREAM_CODEC = StreamCodec.composite(
+                    ByteBufCodecs.FLOAT, Offset::x,
+                    ByteBufCodecs.FLOAT, Offset::y,
+                    ByteBufCodecs.FLOAT, Offset::z,
+                    Offset::new
+            );
+        }
 
-		public static StreamCodec<RegistryFriendlyByteBuf, Metadata> STREAM_CODEC = StreamCodec.composite(
+        public record Rotation(float x, float y, float z) {
+            public static final StreamCodec<RegistryFriendlyByteBuf, Rotation> STREAM_CODEC = StreamCodec.composite(
+                    ByteBufCodecs.FLOAT, Rotation::x,
+                    ByteBufCodecs.FLOAT, Rotation::y,
+                    ByteBufCodecs.FLOAT, Rotation::z,
+                    Rotation::new
+            );
+        }
+
+        public record FollowPlayer(boolean x, boolean y) {
+            public static final StreamCodec<RegistryFriendlyByteBuf, FollowPlayer> STREAM_CODEC = StreamCodec.composite(
+                    ByteBufCodecs.BOOL, FollowPlayer::x,
+                    ByteBufCodecs.BOOL, FollowPlayer::y,
+                    FollowPlayer::new
+            );
+        }
+
+        public static StreamCodec<RegistryFriendlyByteBuf, Metadata> STREAM_CODEC = StreamCodec.composite(
                 ByteBufCodecs.INT, Metadata::color,
                 ByteBufCodecs.INT, Metadata::fontSize,
-				Offset.STREAM_CODEC, Metadata::offset,
-                ByteBufCodecs.FLOAT, Metadata::rotation,
+                Offset.STREAM_CODEC, Metadata::offset,
+                Rotation.STREAM_CODEC, Metadata::rotation,
                 ByteBufCodecs.BOOL, Metadata::dropShadow,
-                ByteBufCodecs.BOOL, Metadata::followPlayer,
+                FollowPlayer.STREAM_CODEC, Metadata::followPlayer,
                 Metadata::new
         );
     }
@@ -64,9 +81,12 @@ public record ProjectorUpdatePayload(
                         be.setOffsetX(payload.metadata().offset().x());
                         be.setOffsetY(payload.metadata().offset().y());
                         be.setOffsetZ(payload.metadata().offset().z());
-                        be.setRotation(payload.metadata().rotation());
+                        be.setRotationX(payload.metadata().rotation().x());
+                        be.setRotationY(payload.metadata().rotation().y());
+                        be.setRotationZ(payload.metadata().rotation().z());
                         be.setDropShadow(payload.metadata().dropShadow());
-                        be.setFollowPlayer(payload.metadata().followPlayer());
+                        be.setFollowPlayerX(payload.metadata().followPlayer().x());
+                        be.setFollowPlayerY(payload.metadata().followPlayer().y());
                     }
                 }
             }

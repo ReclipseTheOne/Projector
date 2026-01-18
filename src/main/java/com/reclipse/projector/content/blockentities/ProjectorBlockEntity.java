@@ -27,9 +27,12 @@ public class ProjectorBlockEntity extends BlockEntity implements MenuProvider {
     private float offsetX = 0;
     private float offsetY = 0;
     private float offsetZ = 0;
-    private float rotation = 0; // Y-axis rotation in degrees
+    private float rotationX = 0; // X-axis rotation (pitch) in degrees
+    private float rotationY = 0; // Y-axis rotation (yaw) in degrees
+    private float rotationZ = 0; // Z-axis rotation (roll) in degrees
     private boolean dropShadow = false;
-    private boolean followPlayer = false; // Horizontal rotation follows player
+    private boolean followPlayerX = false; // Pitch follows player (vertical)
+    private boolean followPlayerY = false; // Yaw follows player (horizontal)
 
     public ProjectorBlockEntity(BlockPos pos, BlockState blockState) {
         super(PBlockEntityTypes.PROJECTOR.get(), pos, blockState);
@@ -72,16 +75,28 @@ public class ProjectorBlockEntity extends BlockEntity implements MenuProvider {
         return offsetZ;
     }
 
-    public float getRotation() {
-        return rotation;
+    public float getRotationX() {
+        return rotationX;
+    }
+
+    public float getRotationY() {
+        return rotationY;
+    }
+
+    public float getRotationZ() {
+        return rotationZ;
     }
 
     public boolean hasDropShadow() {
         return dropShadow;
     }
 
-    public boolean isFollowPlayer() {
-        return followPlayer;
+    public boolean isFollowPlayerX() {
+        return followPlayerX;
+    }
+
+    public boolean isFollowPlayerY() {
+        return followPlayerY;
     }
 
     public Direction getFacing() {
@@ -143,9 +158,20 @@ public class ProjectorBlockEntity extends BlockEntity implements MenuProvider {
         syncToClient();
     }
 
-    public void setRotation(float rotation) {
-        this.rotation = rotation % 360f;
-        if (this.rotation < 0) this.rotation += 360f;
+    public void setRotationX(float rotationX) {
+        this.rotationX = rotationX;
+        setChanged();
+        syncToClient();
+    }
+
+    public void setRotationY(float rotationY) {
+        this.rotationY = rotationY;
+        setChanged();
+        syncToClient();
+    }
+
+    public void setRotationZ(float rotationZ) {
+        this.rotationZ = rotationZ;
         setChanged();
         syncToClient();
     }
@@ -156,8 +182,14 @@ public class ProjectorBlockEntity extends BlockEntity implements MenuProvider {
         syncToClient();
     }
 
-    public void setFollowPlayer(boolean followPlayer) {
-        this.followPlayer = followPlayer;
+    public void setFollowPlayerX(boolean followPlayerX) {
+        this.followPlayerX = followPlayerX;
+        setChanged();
+        syncToClient();
+    }
+
+    public void setFollowPlayerY(boolean followPlayerY) {
+        this.followPlayerY = followPlayerY;
         setChanged();
         syncToClient();
     }
@@ -235,9 +267,12 @@ public class ProjectorBlockEntity extends BlockEntity implements MenuProvider {
         tag.putFloat("offsetX", offsetX);
         tag.putFloat("offsetY", offsetY);
         tag.putFloat("offsetZ", offsetZ);
-        tag.putFloat("rotation", rotation);
+        tag.putFloat("rotationX", rotationX);
+        tag.putFloat("rotationY", rotationY);
+        tag.putFloat("rotationZ", rotationZ);
         tag.putBoolean("dropShadow", dropShadow);
-        tag.putBoolean("followPlayer", followPlayer);
+        tag.putBoolean("followPlayerX", followPlayerX);
+        tag.putBoolean("followPlayerY", followPlayerY);
     }
 
     @Override
@@ -249,9 +284,12 @@ public class ProjectorBlockEntity extends BlockEntity implements MenuProvider {
         offsetX = tag.getFloat("offsetX");
         offsetY = tag.getFloat("offsetY");
         offsetZ = tag.getFloat("offsetZ");
-        rotation = tag.getFloat("rotation");
+        rotationX = tag.getFloat("rotationX");
+        rotationY = tag.getFloat("rotationY");
+        rotationZ = tag.getFloat("rotationZ");
         dropShadow = tag.getBoolean("dropShadow");
-        followPlayer = tag.getBoolean("followPlayer");
+        followPlayerX = tag.getBoolean("followPlayerX");
+        followPlayerY = tag.getBoolean("followPlayerY");
     }
 
     @Override

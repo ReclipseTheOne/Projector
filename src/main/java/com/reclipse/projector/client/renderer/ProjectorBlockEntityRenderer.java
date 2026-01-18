@@ -46,31 +46,49 @@ public class ProjectorBlockEntityRenderer implements BlockEntityRenderer<Project
         float offsetX = blockEntity.getOffsetX();
         float offsetY = blockEntity.getOffsetY();
         float offsetZ = blockEntity.getOffsetZ();
-        float rotation = blockEntity.getRotation();
-        boolean followPlayer = blockEntity.isFollowPlayer();
+        float rotationX = blockEntity.getRotationX();
+        float rotationY = blockEntity.getRotationY();
+        float rotationZ = blockEntity.getRotationZ();
+        boolean followPlayerX = blockEntity.isFollowPlayerX();
+        boolean followPlayerY = blockEntity.isFollowPlayerY();
 
         poseStack.pushPose();
 
         // Move to center of block, then apply offset
         poseStack.translate(0.5 + offsetX, 0.5 + offsetY, 0.5 + offsetZ);
 
-        // Calculate Y-axis rotation
-        float effectiveRotation = rotation;
-        if (followPlayer) {
-            Player player = Minecraft.getInstance().player;
-            if (player != null) {
-                Vec3 textWorldPos = Vec3.atCenterOf(blockEntity.getBlockPos())
-                        .add(offsetX, offsetY, offsetZ);
-                Vec3 playerPos = player.getEyePosition(partialTick);
-                double dx = playerPos.x - textWorldPos.x;
-                double dz = playerPos.z - textWorldPos.z;
+        // Calculate effective rotations
+        float effectiveRotationX = rotationX;
+        float effectiveRotationY = rotationY;
+        float effectiveRotationZ = rotationZ;
 
-                effectiveRotation = (float) -(Mth.atan2(-dx, dz) * Mth.RAD_TO_DEG);
+        Player player = Minecraft.getInstance().player;
+        if (player != null) {
+            Vec3 textWorldPos = Vec3.atCenterOf(blockEntity.getBlockPos())
+                    .add(offsetX, offsetY, offsetZ);
+            Vec3 playerPos = player.getEyePosition(partialTick);
+            double dx = playerPos.x - textWorldPos.x;
+            double dy = playerPos.y - textWorldPos.y;
+            double dz = playerPos.z - textWorldPos.z;
+            double horizontalDist = Math.sqrt(dx * dx + dz * dz);
+
+            if (followPlayerY) {
+                // Yaw: look at player horizontally
+                effectiveRotationY = (float) -(Mth.atan2(-dx, dz) * Mth.RAD_TO_DEG);
+            }
+
+            if (followPlayerX) {
+                // Pitch: look at player vertically
+                // Negate when Y follow is also enabled to correct the flip
+                float pitch = (float) (Mth.atan2(dy, horizontalDist) * Mth.RAD_TO_DEG);
+                effectiveRotationX = followPlayerY ? -pitch : pitch;
             }
         }
 
-        // Apply Y rotation around the text center point
-        poseStack.mulPose(Axis.YP.rotationDegrees(effectiveRotation));
+        // Apply rotations in Y-X-Z order (yaw-pitch-roll)
+        poseStack.mulPose(Axis.YP.rotationDegrees(effectiveRotationY));
+        poseStack.mulPose(Axis.XP.rotationDegrees(effectiveRotationX));
+        poseStack.mulPose(Axis.ZP.rotationDegrees(effectiveRotationZ));
 
         // Render text with FULL BRIGHTNESS
         Font font = Minecraft.getInstance().font;
