@@ -24,9 +24,10 @@ public class ProjectorBlockEntity extends BlockEntity implements MenuProvider {
     private String text = "";
     private int color = 0xFFFFFF; // White by default (RGB only, no alpha)
     private int fontSize = 10;
-    private int padding = 0;
-    private int offset = 0;
-    private int rotation = 0; // 0-360 degrees
+    private float offsetX = 0;
+    private float offsetY = 0;
+    private float offsetZ = 0;
+    private float rotation = 0; // Y-axis rotation in degrees
     private boolean dropShadow = false;
     private boolean followPlayer = false; // Horizontal rotation follows player
 
@@ -59,15 +60,19 @@ public class ProjectorBlockEntity extends BlockEntity implements MenuProvider {
         return fontSize;
     }
 
-    public int getPadding() {
-        return padding;
+    public float getOffsetX() {
+        return offsetX;
     }
 
-    public int getOffset() {
-        return offset;
+    public float getOffsetY() {
+        return offsetY;
     }
 
-    public int getRotation() {
+    public float getOffsetZ() {
+        return offsetZ;
+    }
+
+    public float getRotation() {
         return rotation;
     }
 
@@ -120,20 +125,27 @@ public class ProjectorBlockEntity extends BlockEntity implements MenuProvider {
         syncToClient();
     }
 
-    public void setPadding(int padding) {
-        this.padding = Math.clamp(padding, 0, 20);
+    public void setOffsetX(float offsetX) {
+        this.offsetX = offsetX;
         setChanged();
         syncToClient();
     }
 
-    public void setOffset(int offset) {
-        this.offset = Math.clamp(offset, 0, 10);
+    public void setOffsetY(float offsetY) {
+        this.offsetY = offsetY;
         setChanged();
         syncToClient();
     }
 
-    public void setRotation(int rotation) {
-        this.rotation = Math.clamp(rotation, 0, 360);
+    public void setOffsetZ(float offsetZ) {
+        this.offsetZ = offsetZ;
+        setChanged();
+        syncToClient();
+    }
+
+    public void setRotation(float rotation) {
+        this.rotation = rotation % 360f;
+        if (this.rotation < 0) this.rotation += 360f;
         setChanged();
         syncToClient();
     }
@@ -220,9 +232,10 @@ public class ProjectorBlockEntity extends BlockEntity implements MenuProvider {
         tag.putString("text", text);
         tag.putInt("color", color);
         tag.putInt("fontSize", fontSize);
-        tag.putInt("padding", padding);
-        tag.putInt("offset", offset);
-        tag.putInt("rotation", rotation);
+        tag.putFloat("offsetX", offsetX);
+        tag.putFloat("offsetY", offsetY);
+        tag.putFloat("offsetZ", offsetZ);
+        tag.putFloat("rotation", rotation);
         tag.putBoolean("dropShadow", dropShadow);
         tag.putBoolean("followPlayer", followPlayer);
     }
@@ -233,9 +246,10 @@ public class ProjectorBlockEntity extends BlockEntity implements MenuProvider {
         text = tag.getString("text");
         color = tag.getInt("color");
         fontSize = tag.getInt("fontSize");
-        padding = tag.getInt("padding");
-        offset = tag.getInt("offset");
-        rotation = tag.getInt("rotation");
+        offsetX = tag.getFloat("offsetX");
+        offsetY = tag.getFloat("offsetY");
+        offsetZ = tag.getFloat("offsetZ");
+        rotation = tag.getFloat("rotation");
         dropShadow = tag.getBoolean("dropShadow");
         followPlayer = tag.getBoolean("followPlayer");
     }

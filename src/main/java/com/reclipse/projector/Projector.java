@@ -4,8 +4,10 @@ import com.reclipse.projector.networking.ProjectorUpdatePayload;
 import com.reclipse.projector.registries.*;
 import net.minecraft.resources.ResourceLocation;
 import net.neoforged.bus.api.IEventBus;
-import net.neoforged.fml.common.Mod;
 import net.neoforged.fml.ModContainer;
+import net.neoforged.fml.common.Mod;
+import net.neoforged.fml.config.ModConfig;
+import net.neoforged.fml.event.config.ModConfigEvent;
 import net.neoforged.neoforge.network.event.RegisterPayloadHandlersEvent;
 import net.neoforged.neoforge.network.registration.PayloadRegistrar;
 import org.slf4j.Logger;
@@ -19,6 +21,9 @@ public final class Projector {
 
     public Projector(IEventBus modEventBus, ModContainer modContainer) {
         modEventBus.addListener(this::registerPayloads);
+        modEventBus.addListener(this::onConfigLoad);
+
+        modContainer.registerConfig(ModConfig.Type.SERVER, ProjectorConfig.SERVER_SPEC);
 
         PItems.ITEMS.register(modEventBus);
         PBlocks.BLOCKS.register(modEventBus);
@@ -34,6 +39,12 @@ public final class Projector {
                 ProjectorUpdatePayload.STREAM_CODEC,
                 ProjectorUpdatePayload::handle
         );
+    }
+
+    private void onConfigLoad(ModConfigEvent event) {
+        if (event.getConfig().getSpec() == ProjectorConfig.SERVER_SPEC) {
+            ProjectorConfig.onLoad();
+        }
     }
 
     public static ResourceLocation rl(String path) {

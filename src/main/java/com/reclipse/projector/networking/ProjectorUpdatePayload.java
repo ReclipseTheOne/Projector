@@ -17,13 +17,21 @@ public record ProjectorUpdatePayload(
         Metadata metadata
 ) implements CustomPacketPayload {
     // Wrapper cuh there are no big enough composite()'s :(
-    public record Metadata(int color, int fontSize, int padding, int offset, int rotation, boolean dropShadow, boolean followPlayer) {
-        public static StreamCodec<RegistryFriendlyByteBuf, Metadata> STREAM_CODEC = NeoForgeStreamCodecs.composite(
+    public record Metadata(int color, int fontSize, Offset offset, float rotation, boolean dropShadow, boolean followPlayer) {
+		public record Offset(float x, float y, float z) {
+			public static final StreamCodec<RegistryFriendlyByteBuf, Offset> STREAM_CODEC = StreamCodec.composite(
+					ByteBufCodecs.FLOAT, Offset::x,
+					ByteBufCodecs.FLOAT, Offset::y,
+					ByteBufCodecs.FLOAT, Offset::z,
+					Offset::new
+			);
+		}
+
+		public static StreamCodec<RegistryFriendlyByteBuf, Metadata> STREAM_CODEC = StreamCodec.composite(
                 ByteBufCodecs.INT, Metadata::color,
                 ByteBufCodecs.INT, Metadata::fontSize,
-                ByteBufCodecs.INT, Metadata::padding,
-                ByteBufCodecs.INT, Metadata::offset,
-                ByteBufCodecs.INT, Metadata::rotation,
+				Offset.STREAM_CODEC, Metadata::offset,
+                ByteBufCodecs.FLOAT, Metadata::rotation,
                 ByteBufCodecs.BOOL, Metadata::dropShadow,
                 ByteBufCodecs.BOOL, Metadata::followPlayer,
                 Metadata::new
@@ -53,8 +61,9 @@ public record ProjectorUpdatePayload(
                         be.setText(payload.text());
                         be.setColor(payload.metadata().color());
                         be.setFontSize(payload.metadata().fontSize());
-                        be.setPadding(payload.metadata().padding());
-                        be.setOffset(payload.metadata().offset());
+                        be.setOffsetX(payload.metadata().offset().x());
+                        be.setOffsetY(payload.metadata().offset().y());
+                        be.setOffsetZ(payload.metadata().offset().z());
                         be.setRotation(payload.metadata().rotation());
                         be.setDropShadow(payload.metadata().dropShadow());
                         be.setFollowPlayer(payload.metadata().followPlayer());

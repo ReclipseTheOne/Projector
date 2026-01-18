@@ -10,7 +10,6 @@ import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
 import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.Direction;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.phys.AABB;
@@ -24,14 +23,12 @@ public class ProjectorBlockEntityRenderer implements BlockEntityRenderer<Project
     @Override
     public AABB getRenderBoundingBox(ProjectorBlockEntity blockEntity) {
         BlockPos pos = blockEntity.getBlockPos();
-        int offset = blockEntity.getOffset();
-        Direction facing = blockEntity.getFacing();
+        float offsetX = Math.abs(blockEntity.getOffsetX());
+        float offsetY = Math.abs(blockEntity.getOffsetY());
+        float offsetZ = Math.abs(blockEntity.getOffsetZ());
+        float maxOffset = Math.max(offsetX, Math.max(offsetY, offsetZ)) + 2;
 
-        return new AABB(pos).expandTowards(
-                facing.getStepX() * (offset + 1),
-                facing.getStepY() * (offset + 1),
-                facing.getStepZ() * (offset + 1)
-        );
+        return new AABB(pos).inflate(maxOffset);
     }
 
     @Override
@@ -42,53 +39,38 @@ public class ProjectorBlockEntityRenderer implements BlockEntityRenderer<Project
             return;
         }
 
-        int fontSize = blockEntity.getFontSize();
-        int padding = blockEntity.getPadding();
-        int offset = blockEntity.getOffset();
-        int rotation = blockEntity.getRotation();
-        boolean followPlayer = blockEntity.isFollowPlayer();
-        Direction facing = blockEntity.getFacing();
+        // Parse \n escape sequences for newlines
+        text = text.replace("\\n", "\n");
 
-        float offsetHoriz = padding * 5f;
-        float blockOffset = -0.01f - offset;
+        int fontSize = blockEntity.getFontSize();
+        float offsetX = blockEntity.getOffsetX();
+        float offsetY = blockEntity.getOffsetY();
+        float offsetZ = blockEntity.getOffsetZ();
+        float rotation = blockEntity.getRotation();
+        boolean followPlayer = blockEntity.isFollowPlayer();
 
         poseStack.pushPose();
 
-        // Always use block facing direction for positioning
-        alignRendering(poseStack, facing);
-        // Position on block face
-        poseStack.translate(0, 1, 1 - blockOffset);
+        // Move to center of block, then apply offset
+        poseStack.translate(0.5 + offsetX, 0.5 + offsetY, 0.5 + offsetZ);
 
-        // Calculate effective Z rotation
+        // Calculate Y-axis rotation
         float effectiveRotation = rotation;
         if (followPlayer) {
             Player player = Minecraft.getInstance().player;
             if (player != null) {
-                // Calculate text's world position
-                Vec3 textWorldPos = Vec3.atCenterOf(blockEntity.getBlockPos()).add(0, 0.5, 0);
-
+                Vec3 textWorldPos = Vec3.atCenterOf(blockEntity.getBlockPos())
+                        .add(offsetX, offsetY, offsetZ);
                 Vec3 playerPos = player.getEyePosition(partialTick);
                 double dx = playerPos.x - textWorldPos.x;
                 double dz = playerPos.z - textWorldPos.z;
 
-                // Calculate angle to player and adjust based on block facing
-                float angleToPlayer = (float) (Mth.atan2(dz, dx) * Mth.RAD_TO_DEG);
-                float facingAngle = facing.toYRot();
-
-                // Z rotation to point toward player (adjusted for block facing)
-                effectiveRotation = angleToPlayer + facingAngle + 90f;
+                effectiveRotation = (float) -(Mth.atan2(-dx, dz) * Mth.RAD_TO_DEG);
             }
         }
 
-        // Scale to texture coordinates
-        poseStack.scale(1f / 16f, -1f / 16f, 0.00005f);
-
-        // Apply horizontal offset
-        poseStack.translate(offsetHoriz, 0, 0);
-
-        // Scale for font size
-        float scale = 0.05f * fontSize;
-        poseStack.scale(scale, scale, 1);
+        // Apply Y rotation around the text center point
+        poseStack.mulPose(Axis.YP.rotationDegrees(effectiveRotation));
 
         // Render text with FULL BRIGHTNESS
         Font font = Minecraft.getInstance().font;
@@ -109,46 +91,39 @@ public class ProjectorBlockEntityRenderer implements BlockEntityRenderer<Project
         }
         float totalHeight = lines.length * lineHeight;
 
-        // Calculate center point for rotation pivot
-        float centerX = maxWidth / 2f;
-        float centerY = totalHeight / 2f;
+        // Scale for font size
+        float scale = 0.05f * fontSize / 16f;
 
-        // Render front side
+        // Render front side (facing +Z after rotation)
+        poseStack.pushPose();
+        poseStack.scale(scale, -scale, scale);
         renderTextLines(poseStack, bufferSource, font, lines, lineHeight, maxWidth, totalHeight,
-                centerX, centerY, effectiveRotation, colorWithAlpha, blockEntity.hasDropShadow(), false);
+                colorWithAlpha, blockEntity.hasDropShadow());
+        poseStack.popPose();
 
-        // Render back side (mirrored)
+        // Render back side (facing -Z after rotation)
+        poseStack.pushPose();
+        poseStack.mulPose(Axis.YP.rotationDegrees(180));
+        poseStack.scale(scale, -scale, scale);
         renderTextLines(poseStack, bufferSource, font, lines, lineHeight, maxWidth, totalHeight,
-                centerX, centerY, effectiveRotation, colorWithAlpha, blockEntity.hasDropShadow(), true);
+                colorWithAlpha, blockEntity.hasDropShadow());
+        poseStack.popPose();
 
         poseStack.popPose();
     }
 
     private void renderTextLines(PoseStack poseStack, MultiBufferSource bufferSource, Font font,
                                   String[] lines, int lineHeight, float maxWidth, float totalHeight,
-                                  float centerX, float centerY, float rotation, int color,
-                                  boolean dropShadow, boolean backSide) {
-        poseStack.pushPose();
+                                  int color, boolean dropShadow) {
+        // Center the text block
+        float centerX = maxWidth / 2f;
+        float centerY = totalHeight / 2f;
 
-        if (backSide) {
-            // Flip for back side - mirror on X axis and offset slightly in Z
-            poseStack.translate(maxWidth, 0, -1);
-            poseStack.scale(-1, 1, 1);
-        }
-
-        // Translate to center, apply rotation, translate back
-        poseStack.translate(centerX, centerY, 0);
-        if (rotation != 0) {
-            poseStack.mulPose(Axis.ZP.rotationDegrees(rotation));
-        }
-        poseStack.translate(-centerX, -centerY, 0);
-
-        // Render each line centered
         for (int i = 0; i < lines.length; i++) {
             String line = lines[i];
             float lineWidth = font.width(line);
-            float xOffset = (maxWidth - lineWidth) / 2f;
-            float yPos = i * lineHeight;
+            float xOffset = -centerX + (maxWidth - lineWidth) / 2f;
+            float yPos = -centerY + i * lineHeight;
 
             font.drawInBatch(
                     line,
@@ -157,34 +132,10 @@ public class ProjectorBlockEntityRenderer implements BlockEntityRenderer<Project
                     dropShadow,
                     poseStack.last().pose(),
                     bufferSource,
-                    Font.DisplayMode.SEE_THROUGH,
+                    Font.DisplayMode.NORMAL,
                     0,
                     LightTexture.FULL_BRIGHT
             );
         }
-
-        poseStack.popPose();
-    }
-
-    private void alignRendering(PoseStack poseStack, Direction side) {
-        poseStack.translate(0.5, 0.5, 0.5);
-
-        switch (side) {
-            case NORTH:
-                break;
-            case SOUTH:
-                poseStack.mulPose(Axis.YP.rotationDegrees(180));
-                break;
-            case WEST:
-                poseStack.mulPose(Axis.YP.rotationDegrees(90));
-                break;
-            case EAST:
-                poseStack.mulPose(Axis.YP.rotationDegrees(-90));
-                break;
-            default:
-                break;
-        }
-
-        poseStack.translate(-0.5, -0.5, -0.5);
     }
 }
