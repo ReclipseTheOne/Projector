@@ -8,6 +8,11 @@ plugins {
     id "com.modrinth.minotaur" version "2.+"
 }
 
+java {
+    withSourcesJar()
+    withJavadocJar()
+}
+
 tasks.named('wrapper', Wrapper).configure {
     // Define wrapper values here so as to not have to always do so when updating gradlew.properties.
     // Switching this to Wrapper.DistributionType.ALL will download the full gradle sources that comes with
@@ -158,10 +163,10 @@ if (System.getenv('CURSEFORGE_TOKEN')) {
         mainFile.addModLoader 'NeoForge'
 
         // Add sources and javadoc as additional files
-        def sourcesFile = mainFile.withAdditionalFile(sourcesJar)
+        def sourcesFile = mainFile.withAdditionalFile(tasks.named("sourcesJar"))
         sourcesFile.displayName = "${mod_id}-${mod_version}-${minecraft_version}-sources"
 
-        def javadocFile = mainFile.withAdditionalFile(javadocJar)
+        def javadocFile = mainFile.withAdditionalFile(tasks.named("javadocJar"))
         javadocFile.displayName = "${mod_id}-${mod_version}-${minecraft_version}-javadoc"
     }
 }
@@ -174,7 +179,7 @@ if (System.getenv('MODRINTH_TOKEN')) {
         versionNumber = mod_version
         versionType = System.getenv('RELEASE_TYPE') ?: 'release'
         uploadFile = jar
-        additionalFiles = [sourcesJar, javadocJar]
+        additionalFiles = [tasks.named("sourcesJar"), tasks.named("javadocJar")]
         changelog = System.getenv('CHANGELOG') ?: 'See GitHub for changes'
         gameVersions = [minecraft_version]
         loaders = ["neoforge"]
